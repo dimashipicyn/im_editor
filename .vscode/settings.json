@@ -1,0 +1,30 @@
+{
+    "cmake.configureOnOpen": false,
+    "files.encoding": "utf8",
+    "clangd.arguments": ["-log=verbose",
+                         "--clang-tidy",
+                         "-pretty",
+                         "--background-index", 
+                         //"--query-driver=C:/SysGCC/beaglebone/bin/arm-linux-gnueabihf-g++.exe", //for cross compile usage
+                         "--compile-commands-dir=${workspaceFolder}/out"],
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "cmake.parallelJobs": 16,
+    "C_Cpp.intelliSenseCacheSize": 0,
+    "cmake.copyCompileCommands": "${workspaceFolder}/out/compile_commands.json",
+    "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
+    "C_Cpp.codeAnalysis.clangTidy.args": [
+        "-p=${workspaceFolder}/out"
+    ],
+
+    "plc_host": "10.10.50.122",
+    "plc_port": "2020",
+    "plc_login": "root",
+    "plc_password": "1",
+    "plc_deploy_path": "/opt/abak/A:/assembly/",
+    // For debugging abak_power, canmanager use 'prog_args: gdb'
+    // For can_logger use 'prog_args: -d'
+    "prog_args": "",
+    "plc_ssh_port": 22
+}

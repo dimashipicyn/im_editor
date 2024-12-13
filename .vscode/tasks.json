@@ -1,0 +1,304 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		//"Stop_abak_power"
+        {
+			"type": "shell",
+			"label": "Stop_abak_power",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"${config:plc_host}",
+				"-l",
+				"${config:plc_login}",
+				"-pw",
+				"${config:plc_password}",
+				"'systemctl stop abak_power &'"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"Start_abak_power"
+        {
+			"type": "shell",
+			"label": "Start_abak_power",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"${config:plc_host}",
+				"-l",
+				"${config:plc_login}",
+				"-pw",
+				"${config:plc_password}",
+				"'systemctl start abak_power &'"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"UploadAll"
+        {
+			"type": "shell",
+			"label": "UploadAll",
+			"detail": "",
+			"command": "pscp",
+			"args": [
+                "-P",
+                "${config:plc_ssh_port}",
+				"-pw",
+				"${config:plc_password}",
+				"${workspaceFolder}/bin/strip/*",
+				"${config:plc_login}@${config:plc_host}:${config:plc_deploy_path}"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"Upload"
+		{
+			"type": "shell",
+			"label": "Upload",
+			"detail": "",
+			"command": "pscp",
+			"args": [
+                "-P",
+                "${config:plc_ssh_port}",
+				"-pw",
+				"${config:plc_password}",
+				"${workspaceFolder}/bin/strip/${command:cmake.getLaunchTargetFilename}",
+				"${config:plc_login}@${config:plc_host}:${config:plc_deploy_path}"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}			
+		},
+		//"Start"
+        {
+			"type": "shell",
+			"label": "AutoUpdateFingerprint",
+            "command": "echo y | plink -pw ${config:plc_password} -ssh ${config:plc_login}@${config:plc_host} 'exit'"
+        },
+		{
+			"type": "shell",
+			"label": "Start",
+			"detail": "",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"${config:plc_host}",
+				"-l",
+				"${config:plc_login}",
+				"-pw",
+				"${config:plc_password}",
+				"gdbserver :${config:plc_port} ${config:plc_deploy_path}${command:cmake.getLaunchTargetFilename} ${config:prog_args}"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": "\\b\\B",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": {
+							"regexp": "Process*"
+						},
+						"endsPattern": {
+							"regexp": "Listening*"
+						}
+					}
+				}
+			]
+		},
+		
+		//"Setup"
+        {
+			"type": "shell",
+			"label": "Setup",
+			"detail": "",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"${config:plc_host}",
+				"-l",
+				"${config:plc_login}",
+				"-pw",
+				"${config:plc_password}",
+				"chmod 755 ${config:plc_deploy_path}${command:cmake.getLaunchTargetFilename}"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"Deploy"
+        {
+			"type": "shell",
+			"label": "Deploy",
+			"detail": "",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Stop_abak_power",
+				"Upload",
+				"Start_abak_power"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		
+		//"KillGdbServer"
+        {
+			"type": "shell",
+			"label": "KillGdbServer",
+			"detail": "",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"-pw",
+				"${config:plc_password}",
+				"${config:plc_login}@${config:plc_host}",
+				"pkill gdbserver &"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"KillProcess"
+        {
+			"type": "shell",
+			"label": "KillProcess",
+			"detail": "",
+			"command": "plink",
+			"args": [
+				"-batch",
+				"${config:plc_host}",
+				"-l",
+				"${config:plc_login}",
+				"-pw",
+				"${config:plc_password}",
+				"pkill ${command:cmake.getLaunchTargetFilename} &"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		//"Build"
+        {
+			"type": "cmake",
+			"label": "Build",
+			"detail": "",
+			"command": "build",
+			"targets": [
+				"${command:cmake.getLaunchTargetFilename}"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		
+		//"RemoteDebug"
+        {
+			"type": "shell",
+			"label": "RemoteDebug",
+			"detail": "",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Build",
+                "AutoUpdateFingerprint",
+				"KillGdbServer",
+				"KillProcess",
+				"Upload",
+				"Setup",
+				"Start"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		
+		//"DeployAll"
+        {
+			"type": "shell",
+			"label": "DeployAll",
+			"detail": "",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Stop_abak_power",
+				"UploadAll",
+				"Start_abak_power"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		}
+	]
+}

@@ -1,0 +1,161 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 18,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+                "CMAKE_CXX_STANDARD": "14",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+                "CMAKE_CXX_EXTENSIONS": "OFF",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin",
+                "CPACK_PACKAGE_DIRECTORY": "${sourceDir}/packages",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+                "CMAKE_SYSTEM_NAME": "Linux",
+                "CMAKE_SYSTEM_PROCESSOR": "arm"
+            },
+            "environment": {
+                "SOURCE_DIR": "${sourceDir}"
+            },
+          "vendor": {
+            "microsoft.com/VisualStudioSettings/CMake/1.0": {
+              "cacheVariables": {
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": ""
+              }
+            }
+          }
+        },
+        {
+            "name": "without-compiler",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang-arm",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/clang_arm.cmake"
+            }
+        },
+        {
+            "name": "clang-arm64",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/clang_arm64.cmake"
+            }
+        },
+        {
+            "name": "gcc-arm",
+            "hidden": true,
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "armhf-linux-gcc",
+                "CMAKE_C_COMPILER": "arm-linux-gnueabihf-gcc",
+                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-g++",
+                "CMAKE_SYSROOT": "$env{SYSROOT_ARM32}"
+            }
+        },
+        {
+            "name": "gcc-arm64",
+            "hidden": true,
+             "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchains/gcc_arm64.cmake"
+             }
+        },
+        {
+            "name": "base debug",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "base release",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "gcc-arm64-debug",
+            "inherits": [
+                "base debug",
+                "gcc-arm64"
+            ]
+        },
+        {
+            "name": "gcc-arm64-release",
+            "inherits": [
+                "base release",
+                "gcc-arm64"
+            ]
+        },
+        {
+            "name": "gcc-arm-debug",
+            "inherits": [
+                "base debug",
+                "gcc-arm"
+            ]
+        },
+        {
+            "name": "gcc-arm-release",
+            "inherits": [
+                "base release",
+                "gcc-arm"
+            ]
+        },
+        {
+            "name": "clang-arm-debug",
+            "inherits": [
+                "base debug",
+                "clang-arm"
+            ]
+        },
+        {
+            "name": "clang-arm-release",
+            "inherits": [
+                "base release",
+                "clang-arm"
+            ]
+        }
+        ,
+        {
+            "name": "clang-arm64-debug",
+            "inherits": [
+                "base debug",
+                "clang-arm64"
+            ]
+        },
+        {
+            "name": "clang-arm64-release",
+            "inherits": [
+                "base release",
+                "clang-arm64"
+            ]
+        }
+    ],
+
+    "buildPresets": [
+        {
+            "name": "base-build",
+            "hidden": true,
+            "jobs": 16
+        }
+    ],
+
+    "packagePresets": [
+    ]
+}

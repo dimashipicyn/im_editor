@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+
+    "configurations": [
+        {
+            "name": "Remote GDB (assembly)",
+            "type": "cppdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "targetArchitecture": "arm",
+            "MIMode": "gdb",
+            "preLaunchTask": "RemoteDebug",
+            "program": "${workspaceFolder}/bin/${command:cmake.getLaunchTargetFilename}",
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "miDebuggerServerAddress": "${config:plc_host}:${config:plc_port}",
+            "linux": {
+                "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            },
+            "windows": {
+                "miDebuggerPath": "aarch64-linux-gnu-gdb.exe",
+            },
+        },
+
+        {
+            "name": "Remote attach LLDB",
+            "type": "lldb",
+            "request": "custom",
+            "preLaunchTask": "RemoteDebug",
+            "targetCreateCommands": ["target create ${workspaceFolder}/bin/${command:cmake.getLaunchTargetFilename}"],
+            "processCreateCommands": ["gdb-remote ${config:plc_host}:${config:plc_port}"]
+        }
+    ]
+}
