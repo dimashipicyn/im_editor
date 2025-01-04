@@ -13,7 +13,7 @@
             "binaryDir": "${sourceDir}/out/${presetName}",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-                "CMAKE_CXX_STANDARD": "14",
+                "CMAKE_CXX_STANDARD": "17",
                 "CMAKE_CXX_STANDARD_REQUIRED": "ON",
                 "CMAKE_CXX_EXTENSIONS": "OFF",
                 "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin",

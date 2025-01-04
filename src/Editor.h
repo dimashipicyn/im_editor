@@ -22,9 +22,6 @@ public:
         ImGuiIO& io = ImGui::GetIO();
         if (ImGui::IsWindowFocused())
         {
-            if (ImGui::IsWindowHovered())
-                ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
-
             for (const ImWchar c : io.InputQueueCharacters)
             {
                 AddCharacter(c);
@@ -32,10 +29,35 @@ public:
 
             if (ImGui::IsKeyPressed(ImGuiKey_Enter))
             {
-                m_text.emplace_back();
+                AddNewLine();
+            }
 
-                m_cursor.Move(0, 1);
-                m_cursor.SetPos(0, m_cursor.GetPosY());
+            if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+            {
+                const Line& line = m_text[m_cursor.GetPosY()];
+                m_cursor.Move(-1, 0, line.size(), m_text.size());
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+            {
+                const Line& line = m_text[m_cursor.GetPosY()];
+                m_cursor.Move(1, 0, line.size(), m_text.size());
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+            {
+                const int next_index = std::clamp<int>(m_cursor.GetPosY() - 1, 0, m_text.size());
+
+                const Line& line = m_text[next_index];
+                m_cursor.Move(0, -1, line.size(), m_text.size());
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+            {
+                const int next_index = std::clamp<int>(m_cursor.GetPosY() + 1, 0, m_text.size() - 1);
+
+                const Line& line = m_text[next_index];
+                m_cursor.Move(0, 1, line.size(), m_text.size() - 1);
             }
         }
     }
@@ -64,8 +86,18 @@ public:
 private:
     void AddCharacter(ImWchar ch)
     {
-        m_text[m_cursor.GetPosY()].insert(m_cursor.GetPosX(), 1, (char)ch);
-        m_cursor.Move(1, 0);
+        Line& line = m_text[m_cursor.GetPosY()];
+        line.insert(m_cursor.GetPosX(), 1, (char)ch);
+
+        m_cursor.Move(1, 0, line.size(), m_text.size());
+    }
+
+    void AddNewLine()
+    {
+        m_text.emplace(m_text.begin() + m_cursor.GetPosY() + 1);
+
+        const Line& line = m_text[m_cursor.GetPosY()];
+        m_cursor.Move(INT32_MIN, 1, line.size(), m_text.size());
     }
 
     using Line = std::string;
