@@ -1,7 +1,14 @@
 {
     "dependencies": [
         {
-            "name": "imgui"
-        }
+            "name": "glfw3"
+        },
+        { 
+        "name": "imgui", 
+        "features": [
+          "opengl2-binding", 
+          "glfw-binding"
+        ] 
+      }
     ]
 }
