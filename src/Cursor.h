@@ -7,23 +7,16 @@
 class Cursor
 {
 public:
-    void Render()
+    void Render(const ImVec2& pos)
     {
-        const auto curr = ImGui::GetTime();
-        const auto elapsed = curr - m_last_update_sec;
-
-        if (elapsed >= m_blink_period_sec)
-        {
-            m_last_update_sec = curr;
-            m_visible = !m_visible;
-        }
+        Update();
 
         if (m_visible)
         {
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
             const float font_size = ImGui::GetFontSize();
-            const auto pos = GetAbsPos();
+            //const auto pos = GetAbsPos();
             draw_list->AddRectFilled(pos, {pos.x + 1, pos.y + font_size}, m_color);
         }
     }
@@ -60,6 +53,18 @@ public:
     }
 
 private:
+    void Update()
+    {
+        const auto curr = ImGui::GetTime();
+        const auto elapsed = curr - m_last_update_sec;
+
+        if (elapsed >= m_blink_period_sec)
+        {
+            m_last_update_sec = curr;
+            m_visible = !m_visible;
+        }
+    }
+
     ImVec2 GetAbsPos() const
     {
         const auto offset = ImGui::GetCursorScreenPos();
