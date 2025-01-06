@@ -1,18 +1,20 @@
 #pragma once
 
+#include "Breakpoint.h"
 #include "Cursor.h"
-#include "Misc.h"
 #include "Highlighter.h"
+#include "Misc.h"
 
-#include <cctype>
+
 #include <cstdint>
 #include <cstring>
 #include <imgui.h>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <random>
+
 
 class Document
 {
@@ -20,7 +22,8 @@ public:
     Document()
     {
         m_text.reserve(10);
-        m_text.resize(1);
+        m_text.resize(10);
+        SetBreakpoint({0, true});
     }
 
     void Render()
@@ -28,9 +31,13 @@ public:
         const int width = CalcNumberOfDigits(m_text.size());
         for (size_t line_index = 0; line_index < m_text.size(); line_index++)
         {
+            RenderBreakpoint(line_index);
+
             const Line& current_line = m_text[line_index];
 
-            ImGui::Text("%*zu", width, line_index);
+            const auto number_color = ImGui::ColorConvertU32ToFloat4(m_palette.GetColor(PaletteIndex::LineNumber));
+            ImGui::SameLine(0, 0);
+            ImGui::TextColored(number_color, "%*zu", width, line_index);
 
             ImGui::SameLine();
             if (m_cursor.InSameLine(line_index))
@@ -82,10 +89,28 @@ public:
     {
         return m_palette;
     }
-    
+
     void SetPalette(const Palette& palette)
     {
         m_palette = palette;
+    }
+
+    void SetBreakpoint(const Breakpoint breakpoint)
+    {
+        if (breakpoint.line_index < m_text.size())
+        {
+            m_breakpoints[breakpoint.line_index] = breakpoint;
+        }
+    }
+
+    void RemoveBreakpoint(size_t line_index)
+    {
+        m_breakpoints.erase(line_index);
+    }
+
+    bool HasBreakpoint(size_t line_index) const
+    {
+        return m_breakpoints.count(line_index);
     }
 
 private:
@@ -100,9 +125,37 @@ private:
 
     std::tuple<int, int> GetClampedPosition(int x, int y)
     {
-        int ret_y = std::clamp<int>(y, 0, m_text.size());
+        int ret_y = std::clamp<int>(y, 0, m_text.size() - 1);
         int ret_x = std::clamp<int>(x, 0, m_text[ret_y].size());
         return {ret_x, ret_y};
+    }
+
+    void RenderBreakpoint(size_t line_index)
+    {
+        const auto offset = ImGui::GetCursorScreenPos();
+        const float half_font_size = ImGui::GetFontSize() / 2;
+
+        ImGui::PushID(line_index);
+        if (ImGui::InvisibleButton("", ImVec2(half_font_size * 2, half_font_size * 2), ImGuiButtonFlags_MouseButtonLeft))
+        {
+            if (HasBreakpoint(line_index))
+            {
+                RemoveBreakpoint(line_index);
+            }
+            else
+            {
+                SetBreakpoint({line_index, true});
+            }
+        }
+        ImGui::PopID();
+
+        if (HasBreakpoint(line_index))
+        {
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            const auto color = m_palette.GetColor(PaletteIndex::Breakpoint);
+            draw_list->AddCircleFilled({offset.x + half_font_size, offset.y + half_font_size}, half_font_size, color);
+        }
     }
 
     void RenderLine(const std::string& line)
@@ -129,20 +182,6 @@ private:
                 prev_end = end;
             }
         }
-
-        // for (const auto [str, color] : Highlight(line.c_str()))
-        // {
-        //     ImGui::SameLine(0, std::exchange(spacing, 0));
-        //     if (auto old = std::exchange(prev, str); !old.empty())
-        //     {
-        //         ImGui::TextUnformatted(old.data() + old.size(), str.data());
-        //         ImGui::SameLine(0, spacing);
-        //     }
-
-        //     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(color));
-        //     ImGui::TextUnformatted(str.data(), str.data() + str.size());
-        //     ImGui::PopStyleColor();
-        // }
     }
 
     using Line = std::string;
@@ -153,4 +192,6 @@ private:
     Palette m_palette{};
 
     std::unique_ptr<Highlighter> m_highlighter{};
+
+    std::map<int, Breakpoint> m_breakpoints{};
 };

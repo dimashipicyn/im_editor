@@ -16,8 +16,8 @@ public:
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
             const float font_size = ImGui::GetFontSize();
-            //const auto pos = GetAbsPos();
-            draw_list->AddRectFilled(pos, {pos.x + 1, pos.y + font_size}, m_color);
+            ImGuiStyle* style = &ImGui::GetStyle();
+            draw_list->AddRectFilled(pos, {pos.x + 1, pos.y + font_size}, ImGui::ColorConvertFloat4ToU32(style->Colors[ImGuiCol_NavCursor]));
         }
     }
 
@@ -40,11 +40,6 @@ public:
     bool InSameLine(int line_index) const
     {
         return GetPosY() == line_index;
-    }
-
-    void SetColor(ImU32 color)
-    {
-        m_color = color;
     }
 
     void SetBlinkPeriod(float blink_period_sec)
@@ -74,6 +69,5 @@ private:
     ImVec2 m_pos{};
     double m_last_update_sec{};
     float m_blink_period_sec{0.5};
-    ImU32 m_color{0xff7f7f7f};
     bool m_visible{};
 };
