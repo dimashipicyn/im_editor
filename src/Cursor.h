@@ -38,12 +38,6 @@ public:
         return (int)m_pos.y;
     }
 
-    void Move(int x, int y, int max_x, int max_y)
-    {
-        m_pos.x = std::clamp<int>(m_pos.x + x, 0, max_x);
-        m_pos.y = std::clamp<int>(m_pos.y + y, 0, max_y);
-    }
-
     void SetPos(int x, int y)
     {
         m_pos.x = x;
