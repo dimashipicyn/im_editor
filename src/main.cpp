@@ -27,7 +27,7 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-#include "Editor.h"
+#include "EditorWindow.h"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -84,7 +84,7 @@ int main(int, char**)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    Editor editor;
+    EditorWindow editor_window;
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
@@ -110,8 +110,7 @@ int main(int, char**)
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        editor.Input();
-        editor.Render();
+        editor_window.Render();
 
         // Rendering
         ImGui::Render();

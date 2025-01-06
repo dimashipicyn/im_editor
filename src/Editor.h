@@ -1,17 +1,27 @@
 #pragma once
 
 #include "Document.h"
+#include "LuaHighlighter.h"
 
 #include <imgui.h>
+#include <memory>
 
 class Editor
 {
 public:
     Editor()
     {
-        
+        m_doc.SetHighlighter(std::make_unique<LuaHighlighter>());
+        m_doc.SetPalette(Palette::Light());
     }
 
+    void Render()
+    {
+        Input();
+        m_doc.Render();
+    }
+
+private:
     void Input()
     {
         ImGuiIO& io = ImGui::GetIO();
@@ -48,12 +58,6 @@ public:
             }
         }
     }
-
-    void Render()
-    {
-        m_doc.Render();
-    }
-
-private:
+    
     Document m_doc{};
 };

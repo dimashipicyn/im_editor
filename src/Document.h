@@ -2,11 +2,13 @@
 
 #include "Cursor.h"
 #include "Misc.h"
+#include "Highlighter.h"
 
 #include <cctype>
 #include <cstdint>
 #include <cstring>
 #include <imgui.h>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -39,21 +41,7 @@ public:
                 m_cursor.Render({offset.x + size.x, offset.y});
             }
 
-            float spacing = -1;
-            std::string_view prev;
-            for (const auto [str, color] : Highlight(current_line.c_str()))
-            {
-                ImGui::SameLine(0, std::exchange(spacing, 0));
-                if (auto old = std::exchange(prev, str); !old.empty())
-                {
-                    ImGui::TextUnformatted(old.data() + old.size(), str.data());
-                    ImGui::SameLine(0, spacing);
-                }
-
-                ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(color));
-                ImGui::TextUnformatted(str.data(), str.data() + str.size());
-                ImGui::PopStyleColor();
-            }
+            RenderLine(current_line);
         }
     }
 
@@ -85,24 +73,19 @@ public:
         SetCursorAbsPos(xc, yc);
     }
 
-    std::vector<std::tuple<std::string_view, ImU32>> Highlight(std::string_view str)
+    void SetHighlighter(std::unique_ptr<Highlighter> h)
     {
-        std::vector<std::tuple<std::string_view, ImU32>> result;
+        m_highlighter = std::move(h);
+    }
 
-        size_t start = 0;
-        size_t end = 0;
-
-        float val = 0;
-        while ((end = str.find(' ', start)) != std::string_view::npos)
-        {
-            result.emplace_back(str.substr(start, end - start), ImGui::ColorConvertFloat4ToU32({val, 1, 1, 1}));
-            start = end + 1; // Move past the delimiter
-            val += 0.2;
-        }
-
-        // Add the last segment
-        result.emplace_back(str.substr(start), ImGui::ColorConvertFloat4ToU32({val, 1, 1, 1}));
-        return result;
+    const Palette& GetPalette() const
+    {
+        return m_palette;
+    }
+    
+    void SetPalette(const Palette& palette)
+    {
+        m_palette = palette;
     }
 
 private:
@@ -122,9 +105,52 @@ private:
         return {ret_x, ret_y};
     }
 
+    void RenderLine(const std::string& line)
+    {
+        auto highlighted_data = m_highlighter ? m_highlighter->Highlight(line) : Highlighter::HighlightData{};
+        if (highlighted_data.empty())
+        {
+            ImGui::Text("%s", line.c_str());
+        }
+        else
+        {
+            float spacing = -1;
+            size_t prev_end = 0;
+            for (auto [start, end, color] : highlighted_data)
+            {
+                ImGui::SameLine(0, std::exchange(spacing, 0));
+                ImGui::TextUnformatted(line.data() + prev_end, line.data() + start);
+
+                ImGui::SameLine(0, spacing);
+                ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(m_palette.GetColor(color)));
+                ImGui::TextUnformatted(line.data() + start, line.data() + end);
+                ImGui::PopStyleColor();
+
+                prev_end = end;
+            }
+        }
+
+        // for (const auto [str, color] : Highlight(line.c_str()))
+        // {
+        //     ImGui::SameLine(0, std::exchange(spacing, 0));
+        //     if (auto old = std::exchange(prev, str); !old.empty())
+        //     {
+        //         ImGui::TextUnformatted(old.data() + old.size(), str.data());
+        //         ImGui::SameLine(0, spacing);
+        //     }
+
+        //     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(color));
+        //     ImGui::TextUnformatted(str.data(), str.data() + str.size());
+        //     ImGui::PopStyleColor();
+        // }
+    }
+
     using Line = std::string;
     using Text = std::vector<Line>;
 
     Text m_text;
     Cursor m_cursor{};
+    Palette m_palette{};
+
+    std::unique_ptr<Highlighter> m_highlighter{};
 };
