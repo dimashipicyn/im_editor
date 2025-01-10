@@ -2,6 +2,7 @@
 
 #include "Document.h"
 #include "LuaHighlighter.h"
+#include "UndoBuffer.h"
 
 #include <imgui.h>
 #include <memory>
@@ -29,7 +30,25 @@ private:
         {
             for (const ImWchar c : io.InputQueueCharacters)
             {
-                m_doc.AddCharacter(c);
+                //m_doc.AddCharacter(c);
+                m_undo_buffer.AddCommand(std::make_unique<AddCharacterCommand>(m_doc, c));
+            }
+
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Z))
+            {
+                m_undo_buffer.Undo();
+                return;
+            }
+
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Z))
+            {
+                m_undo_buffer.Do();
+                return;
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_Backspace))
+            {
+                m_doc.RemoveCharacter();
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_Enter))
@@ -60,4 +79,5 @@ private:
     }
 
     Document m_doc{};
+    UndoBuffer m_undo_buffer{};
 };

@@ -23,7 +23,6 @@ public:
     {
         m_text.reserve(10);
         m_text.resize(10);
-        SetBreakpoint({0, true});
     }
 
     void Render()
@@ -37,7 +36,7 @@ public:
 
             const auto number_color = ImGui::ColorConvertU32ToFloat4(m_palette.GetColor(PaletteIndex::LineNumber));
             ImGui::SameLine(0, 0);
-            ImGui::TextColored(number_color, "%*zu", width, line_index);
+            ImGui::TextColored(number_color, "%*zu", width, line_index + 1);
 
             ImGui::SameLine();
             if (m_cursor.InSameLine(line_index))
@@ -60,13 +59,45 @@ public:
         MoveCursor(1, 0);
     }
 
+    void RemoveCharacter()
+    {
+        Line& line = m_text[m_cursor.GetPosY()];
+        const int x = m_cursor.GetPosX() - 1;
+        if (x < 0)
+        {
+            const int prev_y = m_cursor.GetPosY() - 1;
+            if (IsValidCursorPosition(0, prev_y))
+            {
+                const int y = m_cursor.GetPosY();
+                MoveCursor(INT32_MAX, -1);
+                m_text[prev_y].append(std::move(m_text[y]));
+                m_text.erase(m_text.begin() + y);
+                return;
+            }
+        }
+
+        if (IsValidCursorPosition(x, m_cursor.GetPosY()))
+        {
+            line.erase(x, 1);
+            MoveCursor(-1, 0);
+        }
+    }
+
     void AddNewLine()
     {
-        m_text.emplace(m_text.begin() + m_cursor.GetPosY() + 1);
+        auto s = m_text[m_cursor.GetPosY()].substr(m_cursor.GetPosX());
+        m_text[m_cursor.GetPosY()].erase(m_cursor.GetPosX());
+
+        m_text.emplace(m_text.begin() + m_cursor.GetPosY() + 1, std::move(s));
         MoveCursor(INT32_MIN, 1);
     }
 
-    void SetCursorAbsPos(int x, int y)
+    std::tuple<int, int> GetCursorPosition() const
+    {
+        return {m_cursor.GetPosX(), m_cursor.GetPosY()};
+    }
+
+    void SetCursorPosition(int x, int y)
     {
         if (IsValidCursorPosition(x, y))
         {
@@ -77,7 +108,7 @@ public:
     void MoveCursor(int x, int y)
     {
         auto [xc, yc] = GetClampedPosition(m_cursor.GetPosX() + x, m_cursor.GetPosY() + y);
-        SetCursorAbsPos(xc, yc);
+        SetCursorPosition(xc, yc);
     }
 
     void SetHighlighter(std::unique_ptr<Highlighter> h)
@@ -95,17 +126,18 @@ public:
         m_palette = palette;
     }
 
-    void SetBreakpoint(const Breakpoint breakpoint)
+    void SetBreakpoint(const Breakpoint breakpoint, bool remove = false)
     {
+        if (remove)
+        {
+            m_breakpoints.erase(breakpoint.line_index);
+            return;
+        }
+
         if (breakpoint.line_index < m_text.size())
         {
             m_breakpoints[breakpoint.line_index] = breakpoint;
         }
-    }
-
-    void RemoveBreakpoint(size_t line_index)
-    {
-        m_breakpoints.erase(line_index);
     }
 
     bool HasBreakpoint(size_t line_index) const
@@ -116,7 +148,7 @@ public:
 private:
     bool IsValidCursorPosition(int x, int y) const
     {
-        if (y >= 0 && y <= m_text.size())
+        if (y >= 0 && y < m_text.size())
         {
             return x >= 0 && x <= m_text[y].size();
         }
@@ -138,14 +170,7 @@ private:
         ImGui::PushID(line_index);
         if (ImGui::InvisibleButton("", ImVec2(half_font_size * 2, half_font_size * 2), ImGuiButtonFlags_MouseButtonLeft))
         {
-            if (HasBreakpoint(line_index))
-            {
-                RemoveBreakpoint(line_index);
-            }
-            else
-            {
-                SetBreakpoint({line_index, true});
-            }
+            SetBreakpoint({line_index, true}, HasBreakpoint(line_index));
         }
         ImGui::PopID();
 
