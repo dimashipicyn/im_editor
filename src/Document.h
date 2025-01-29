@@ -4,7 +4,7 @@
 #include "Cursor.h"
 #include "Highlighter.h"
 #include "Misc.h"
-
+#include "Coord.h"
 
 #include <cstdint>
 #include <cstring>
@@ -51,36 +51,85 @@ public:
         }
     }
 
-    void AddCharacter(ImWchar ch)
+    void Insert(const std::string& str)
     {
-        Line& line = m_text[m_cursor.GetPosY()];
-        line.insert(m_cursor.GetPosX(), 1, (char)ch);
+        const auto splitted = Split(str, '\n');
+        for (size_t i = 0; i < splitted.size(); i++)
+        {
+            Line& line = m_text[m_cursor.GetPosY()];
+            line.insert(m_cursor.GetPosX(), splitted[i]);
+            
+            MoveCursor(splitted[i].size(), 0);
 
-        MoveCursor(1, 0);
+            const bool last = i == splitted.size() - 1;
+            if (!last)
+            {
+                AddNewLine();
+            }
+        }
     }
 
-    void RemoveCharacter()
+    std::string Remove(int num)
     {
-        Line& line = m_text[m_cursor.GetPosY()];
-        const int x = m_cursor.GetPosX() - 1;
-        if (x < 0)
+        std::string out{};
+
+        while (num > 0)
         {
-            const int prev_y = m_cursor.GetPosY() - 1;
-            if (IsValidCursorPosition(0, prev_y))
+            Line& line = m_text[m_cursor.GetPosY()];
+
+            const int pos_x = m_cursor.GetPosX();
+            if (num > pos_x)
             {
-                const int y = m_cursor.GetPosY();
+                out += line.substr(0, pos_x);
+                line.erase(0, pos_x);
+                
+                auto end_line = std::move(line);
+                if (m_cursor.GetPosY() != 0)
+                {
+                    m_text.erase(m_text.begin() + m_cursor.GetPosY());
+                    num -= 1;
+                }
+
                 MoveCursor(INT32_MAX, -1);
-                m_text[prev_y].append(std::move(m_text[y]));
-                m_text.erase(m_text.begin() + y);
-                return;
+                m_text[m_cursor.GetPosY()].append(std::move(end_line));
+            }
+            else
+            {
+                const int pos = pos_x - num;
+                out += line.substr(pos, num);
+                line.erase(pos, num);
+
+                MoveCursor(-num, 0);
+            }
+            num -= pos_x;
+
+            if (!m_cursor.GetPosX() && !m_cursor.GetPosY())
+            {
+                break;
             }
         }
 
-        if (IsValidCursorPosition(x, m_cursor.GetPosY()))
-        {
-            line.erase(x, 1);
-            MoveCursor(-1, 0);
-        }
+        return out;
+
+        // const int x = m_cursor.GetPosX() - 1;
+        // if (x < 0)
+        // {
+        //     const int prev_y = m_cursor.GetPosY() - 1;
+        //     if (IsValidCursorPosition(0, prev_y))
+        //     {
+        //         const int y = m_cursor.GetPosY();
+        //         MoveCursor(INT32_MAX, -1);
+        //         m_text[prev_y].append(std::move(m_text[y]));
+        //         m_text.erase(m_text.begin() + y);
+        //         return;
+        //     }
+        // }
+
+        // if (IsValidCursorPosition(x, m_cursor.GetPosY()))
+        // {
+        //     line.erase(x, 1);
+        //     MoveCursor(-1, 0);
+        // }
     }
 
     void AddNewLine()
@@ -92,7 +141,7 @@ public:
         MoveCursor(INT32_MIN, 1);
     }
 
-    std::tuple<int, int> GetCursorPosition() const
+    Coord GetCursorPosition() const
     {
         return {m_cursor.GetPosX(), m_cursor.GetPosY()};
     }

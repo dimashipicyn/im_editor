@@ -14,7 +14,9 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl2.h"
+#include <chrono>
 #include <stdio.h>
+#include <thread>
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #endif
@@ -32,6 +34,27 @@
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+double g_Time = 0.0; // Time accumulator
+int g_FrameCount = 0; // Frame count
+
+void RenderUI() {
+    ImGui::Begin("FPS Display");
+
+    // Calculate FPS
+    g_FrameCount++;
+    double currentTime = glfwGetTime();
+    double elapsedTime = currentTime - g_Time;
+
+    if (elapsedTime >= 1.0) { // Update every second
+        g_FrameCount = 0;
+        g_Time = currentTime;
+    }
+    double fps = g_FrameCount / elapsedTime;
+    ImGui::Text("FPS: %.1f", fps);
+
+    ImGui::End();
 }
 
 // Main code
@@ -111,6 +134,7 @@ int main(int, char**)
             ImGui::ShowDemoWindow(&show_demo_window);
 
         editor_window.Render();
+        RenderUI();
 
         // Rendering
         ImGui::Render();
@@ -130,6 +154,8 @@ int main(int, char**)
 
         glfwMakeContextCurrent(window);
         glfwSwapBuffers(window);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
     // Cleanup

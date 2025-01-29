@@ -2,6 +2,7 @@
 
 #include "Document.h"
 #include "LuaHighlighter.h"
+#include "Undo.h"
 #include "UndoBuffer.h"
 
 #include <imgui.h>
@@ -28,13 +29,20 @@ private:
         ImGuiIO& io = ImGui::GetIO();
         if (ImGui::IsWindowFocused())
         {
-            for (const ImWchar c : io.InputQueueCharacters)
+            std::string s(io.InputQueueCharacters.size(), 0);
+            std::copy(io.InputQueueCharacters.begin(), io.InputQueueCharacters.end(), s.begin());
+            if (!s.empty())
             {
-                //m_doc.AddCharacter(c);
-                m_undo_buffer.AddCommand(std::make_unique<AddCharacterCommand>(m_doc, c));
+                m_undo_buffer.AddCommand(std::make_unique<AddStrCommand>(m_doc, s));
             }
 
-            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_Z))
+            if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_V))
+            {
+                m_undo_buffer.AddCommand(std::make_unique<AddStrCommand>(m_doc, ImGui::GetClipboardText()));
+                return;
+            }
+
+            if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Z, ImGuiInputFlags_Repeat))
             {
                 m_undo_buffer.Undo();
                 return;
@@ -48,7 +56,7 @@ private:
 
             if (ImGui::IsKeyPressed(ImGuiKey_Backspace))
             {
-                m_doc.RemoveCharacter();
+                m_undo_buffer.AddCommand(std::make_unique<RemoveStrCommand>(m_doc));
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_Enter))

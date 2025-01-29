@@ -19,16 +19,17 @@ public:
 
     void AddCommand(UndoCommandPtr cmd)
     {
-        if (m_buffer.size() >= m_buffer_max_size)
-        {
-            m_buffer.erase(m_buffer.begin());
-        }
         if (!m_buffer.empty())
         {
             m_buffer.erase(std::next(m_buffer.begin(), m_current), m_buffer.end());
         }
-        m_current++;
+        
+        if (m_buffer.size() >= m_buffer_max_size)
+        {
+            m_buffer.erase(m_buffer.begin());
+        }
         m_buffer.insert(m_buffer.end(), std::move(cmd));
+        m_current = m_buffer.size();
     }
 
     void Do()
